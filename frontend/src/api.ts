@@ -1,7 +1,11 @@
 import type { GuessResponse, Instrument, NewRoundResponse } from "./types";
 
-async function post<T>(url: string, body?: unknown): Promise<T> {
-  const res = await fetch(url, {
+// In dev this is empty and requests hit the Vite proxy (same origin). In
+// production set VITE_API_BASE to the deployed backend URL at build time.
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+async function post<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,

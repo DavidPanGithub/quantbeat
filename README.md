@@ -137,6 +137,35 @@ python prep.py --csv tsla_daily.csv --interval day      # daily (default)
 > The bundled Stooq/synthetic data is **daily**, so minute-level play needs an
 > intraday (1-min) OHLCV CSV — that data isn't included.
 
+## Deploy (free)
+
+Frontend on **Cloudflare Pages** + backend on **Render** — both free, no card.
+The backend is read-only (rounds are baked into the image; player balances live
+in the browser), so there's no database to run, and no AI/LLM cost at runtime.
+
+**1. Backend → Render**
+- Push this repo to GitHub.
+- Render dashboard → **New → Blueprint** → pick the repo. `render.yaml` provisions
+  a free Docker web service from `backend/Dockerfile` (which runs `prep.py` at
+  build to bake real TSLA data).
+- Note the service URL, e.g. `https://quantbeat-api.onrender.com`.
+- (Free services sleep after ~15 min idle; first request then cold-starts ~30s.)
+
+**2. Frontend → Cloudflare Pages**
+- Cloudflare dashboard → **Workers & Pages → Create → Pages** → connect the repo.
+- Build settings: **root** `frontend`, **build command** `npm run build`,
+  **output** `dist`.
+- Add an environment variable **`VITE_API_BASE`** = your Render URL (from step 1).
+- Deploy. You'll get `https://quantbeat.pages.dev` (or a custom domain / a
+  `quantbeat.hoiinpan.com` subdomain).
+
+**3. Connect them**
+- Back in Render, set the env var **`ALLOWED_ORIGINS`** to your Pages URL
+  (e.g. `https://quantbeat.pages.dev`) so the API accepts browser requests from it.
+
+**Refresh the data** later by triggering a redeploy on Render (rebuilds the image
+and re-runs `prep.py`), or automate it with a scheduled GitHub Action.
+
 ## Roadmap (v2 ideas)
 
 - Magnitude guesses (`±%`) and "draw the next 5 candles"

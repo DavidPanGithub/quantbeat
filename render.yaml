@@ -1,0 +1,16 @@
+# Render.com blueprint — deploys the QuantBeat API as a free Docker web service.
+# In the Render dashboard: New → Blueprint → point at this repo. After the
+# frontend is on Cloudflare Pages, set ALLOWED_ORIGINS to its URL.
+services:
+  - type: web
+    name: quantbeat-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: ALLOWED_ORIGINS
+        # Replace with your Cloudflare Pages URL once it exists, e.g.
+        # https://quantbeat.pages.dev  (comma-separate multiple origins)
+        value: https://quantbeat.pages.dev

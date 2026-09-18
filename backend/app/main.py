@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import db, trading
 from .bots import BOT_LABELS
 from .config import (
+    ALLOWED_ORIGINS,
     DEFAULT_INTERVAL,
     DIRECTION_DOWN,
     DIRECTION_UP,
@@ -45,10 +46,11 @@ from .models import (
 
 app = FastAPI(title="QuantBeat API", version="1.2.0")
 
-# The Vite dev server runs on a different origin; allow it in development.
+# Allowed origins come from config (env-driven); localhost in dev, the deployed
+# frontend URL in production.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

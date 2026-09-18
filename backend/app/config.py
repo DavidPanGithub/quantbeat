@@ -7,7 +7,18 @@ The engine forecasts a number of *bars* ahead, not a hardcoded number of days.
 A bar is whatever the loaded data is (daily, hourly, minute) — the human-facing
 unit label is stored alongside the data at prep time.
 """
+import os
 from pathlib import Path
+
+# --- CORS ------------------------------------------------------------------
+# Comma-separated origins allowed to call the API. Defaults to the local Vite
+# dev server; set ALLOWED_ORIGINS in production to your deployed frontend URL.
+_DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
+    if o.strip()
+]
 
 # --- Data source -----------------------------------------------------------
 TICKER = "TSLA"
