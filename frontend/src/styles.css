@@ -1,0 +1,431 @@
+:root {
+  --bg: #070b12;
+  --bg-panel: #0d141f;
+  --bg-panel-2: #111a28;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e7ecf3;
+  --text-dim: #8b96a8;
+  --up: #0ecb81;
+  --down: #f6465d;
+  --accent: #f0b90b;
+  --cyan: #26c6da;
+  --mono: "JetBrains Mono", "Roboto Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(1200px 800px at 70% -10%, #10203a 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.brand-mark {
+  color: var(--accent);
+  margin-right: 4px;
+}
+.brand-accent {
+  color: var(--cyan);
+}
+
+.ticker-tape {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--up);
+  box-shadow: 0 0 8px var(--up);
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.ticker-symbol {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.ticker-price {
+  color: var(--up);
+  font-weight: 700;
+}
+.ticker-tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.round-badge {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+/* ---------- Body layout ---------- */
+.app-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  padding: 16px;
+  min-height: 0;
+}
+
+.chart-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ---------- Chart ---------- */
+.chart-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 340px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+.chart-canvas {
+  position: absolute;
+  inset: 0;
+}
+.chart-horizon-badge {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 3;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.chart-horizon-badge b {
+  color: var(--accent);
+}
+
+/* ---------- Trade panel ---------- */
+.trade-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  padding: 16px 18px;
+}
+.trade-prompt {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.trade-prompt b {
+  color: var(--text);
+}
+.trade-prompt.revealing {
+  color: var(--accent);
+  animation: pulse 1s infinite;
+}
+.trade-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.trade-btn {
+  position: relative;
+  border: none;
+  border-radius: 10px;
+  padding: 18px;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #04120c;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.trade-btn-arrow {
+  font-size: 16px;
+}
+.trade-btn-sub {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+.trade-btn.long {
+  background: linear-gradient(180deg, #0ecb81, #0a9c63);
+  box-shadow: 0 6px 20px rgba(14, 203, 129, 0.25);
+}
+.trade-btn.short {
+  background: linear-gradient(180deg, #f6465d, #c22f43);
+  color: #1a0409;
+  box-shadow: 0 6px 20px rgba(246, 70, 93, 0.25);
+}
+.trade-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.trade-btn:active {
+  transform: translateY(0);
+}
+
+/* ---------- Result ---------- */
+.result-banner {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.result-banner.win {
+  color: var(--up);
+  background: rgba(14, 203, 129, 0.1);
+  border: 1px solid rgba(14, 203, 129, 0.4);
+}
+.result-banner.loss {
+  color: var(--down);
+  background: rgba(246, 70, 93, 0.1);
+  border: 1px solid rgba(246, 70, 93, 0.4);
+}
+.result-detail {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.result-detail > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 6px;
+}
+.result-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.result-value {
+  font-weight: 700;
+  font-size: 14px;
+}
+.result-value.pos {
+  color: var(--up);
+}
+.result-value.neg {
+  color: var(--down);
+}
+
+.next-btn {
+  width: 100%;
+  border: 1px solid var(--cyan);
+  background: rgba(38, 198, 218, 0.12);
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.next-btn:hover {
+  background: rgba(38, 198, 218, 0.22);
+}
+
+/* ---------- Scoreboard ---------- */
+.scoreboard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.scoreboard-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.scoreboard-head h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: var(--text);
+}
+.streak {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.streak b {
+  color: var(--accent);
+}
+
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lb-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.lb-row.is-you {
+  background: rgba(38, 198, 218, 0.08);
+  border-color: rgba(38, 198, 218, 0.3);
+}
+.lb-row.is-leader {
+  box-shadow: inset 0 0 0 1px rgba(240, 185, 11, 0.35);
+}
+.lb-name {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.crown {
+  color: var(--accent);
+}
+.lb-call {
+  font-size: 11px;
+}
+.lb-call.ok {
+  color: var(--up);
+}
+.lb-call.bad {
+  color: var(--down);
+}
+.lb-bar-track {
+  height: 8px;
+  background: var(--bg-panel-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lb-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a5568, #718096);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.lb-bar-fill.you {
+  background: linear-gradient(90deg, var(--cyan), #4dd0e1);
+}
+.lb-stat {
+  text-align: right;
+  font-weight: 700;
+  font-size: 13px;
+}
+.lb-stat-sub {
+  display: block;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.scoreboard-foot {
+  margin-top: auto;
+  padding-top: 16px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* ---------- Error screen ---------- */
+.error-screen {
+  align-items: center;
+  justify-content: center;
+}
+.error-card {
+  max-width: 460px;
+  text-align: center;
+  border: 1px solid var(--down);
+  background: var(--bg-panel);
+  border-radius: 12px;
+  padding: 28px;
+}
+.error-card code {
+  color: var(--cyan);
+  font-size: 12px;
+}
+.error-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 880px) {
+  .app-body {
+    grid-template-columns: 1fr;
+  }
+  .scoreboard {
+    order: -1;
+  }
+}
