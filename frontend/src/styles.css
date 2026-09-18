@@ -167,6 +167,60 @@ body {
   min-width: 0;
 }
 
+/* ---------- Era picker ---------- */
+.period-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-panel);
+  padding: 8px 12px;
+}
+.period-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.period-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.period-chip {
+  border: 1px solid var(--border);
+  background: var(--bg-panel-2);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.period-chip:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.period-chip.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  background: rgba(38, 198, 218, 0.12);
+  font-weight: 700;
+}
+
+/* ---------- Revealed window dates ---------- */
+.window-dates {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+}
+.window-dates b {
+  color: var(--accent);
+}
+
 /* ---------- Chart ---------- */
 .chart-wrap {
   position: relative;

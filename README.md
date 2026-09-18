@@ -114,6 +114,14 @@ Every bot trades **shares in its signal's direction at your stake**, so the
 scoreboard is a live **P&L leaderboard**: out-earn all four to win. Blow up your
 account and you can reset. Balances persist in `localStorage`.
 
+## Pick your era (without cheating)
+
+A **market-era picker** lets you choose which slice of history to play — All-time
+or a specific year. To keep the anti-cheat intact, the server picks a **random
+window within** the era you chose and still hides the dates while you trade; the
+**actual dates are revealed only after you guess** ("this window was 2020-02-03
+→ 2020-05-14"). You steer the regime, but you can't look up the specific answer.
+
 ## Days, minutes, whatever you load
 
 The engine forecasts **N bars ahead** — a bar is whatever data you loaded. Feed

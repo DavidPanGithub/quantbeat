@@ -13,8 +13,14 @@ async function post<T>(url: string, body?: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function newRound(): Promise<NewRoundResponse> {
-  return post<NewRoundResponse>("/api/round");
+export function newRound(
+  fromDate?: string,
+  toDate?: string
+): Promise<NewRoundResponse> {
+  return post<NewRoundResponse>("/api/round", {
+    from_date: fromDate ?? null,
+    to_date: toDate ?? null,
+  });
 }
 
 export function submitGuess(

@@ -25,6 +25,8 @@ export interface NewRoundResponse {
   stake_choices: number[];
   starting_balance: number;
   start_close: number;
+  date_min: string | null;
+  date_max: string | null;
   visible: Candle[];
   bots: BotInfo[];
 }
@@ -49,6 +51,8 @@ export interface GuessResponse {
   future_close: number;
   pct_change: number;
   pnl: number;
+  start_date: string;
+  end_date: string;
   strike: number | null;
   premium: number | null;
   contracts: number | null;

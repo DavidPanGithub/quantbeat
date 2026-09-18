@@ -16,6 +16,8 @@ sniffed from network traffic, and one round serves every horizon and instrument.
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -37,6 +39,7 @@ from .models import (
     BotResult,
     GuessRequest,
     GuessResponse,
+    NewRoundRequest,
     NewRoundResponse,
 )
 
@@ -69,10 +72,14 @@ def health() -> dict:
 
 
 @app.post("/api/round", response_model=NewRoundResponse)
-def new_round() -> NewRoundResponse:
+def new_round(req: Optional[NewRoundRequest] = None) -> NewRoundResponse:
+    req = req or NewRoundRequest()
     with db.connect() as conn:
         db.init_db(conn)
-        round_id = db.random_round_id(conn)
+        round_id = db.random_round_id(conn, req.from_date, req.to_date)
+        if round_id is None:
+            # No round in the chosen era — fall back to the whole history.
+            round_id = db.random_round_id(conn)
         if round_id is None:
             raise HTTPException(
                 status_code=503,
@@ -80,6 +87,8 @@ def new_round() -> NewRoundResponse:
             )
         r = db.get_round(conn, round_id)
         interval = _interval(conn)
+        date_min = db.get_meta(conn, "date_min")
+        date_max = db.get_meta(conn, "date_max")
 
     assert r is not None  # random_round_id just returned this id
     return NewRoundResponse(
@@ -90,6 +99,8 @@ def new_round() -> NewRoundResponse:
         stake_choices=STAKE_CHOICES,
         starting_balance=STARTING_BALANCE,
         start_close=r.start_close,
+        date_min=date_min,
+        date_max=date_max,
         visible=r.visible,
         bots=_bot_roster(),
     )
@@ -155,6 +166,8 @@ def submit_guess(round_id: int, guess: GuessRequest) -> GuessResponse:
         future_close=future_close,
         pct_change=pct_change,
         pnl=outcome.pnl,
+        start_date=r.start_date,
+        end_date=r.end_date,
         strike=outcome.strike,
         premium=outcome.premium,
         contracts=outcome.contracts,

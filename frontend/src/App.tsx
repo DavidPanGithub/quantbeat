@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { newRound, submitGuess } from "./api";
 import Chart, { type ChartHandle } from "./components/Chart";
 import Header from "./components/Header";
+import PeriodBar, { type Period } from "./components/PeriodBar";
 import Scoreboard from "./components/Scoreboard";
 import TradePanel from "./components/TradePanel";
 import { estimatePremium } from "./format";
@@ -68,6 +69,9 @@ export default function App() {
   const [selectedHorizon, setSelectedHorizon] = useState(DEFAULT_HORIZON);
   const [instrument, setInstrument] = useState<Instrument>("long");
   const [stake, setStake] = useState(DEFAULT_STAKE);
+  const [period, setPeriod] = useState<Period>({ id: "all", label: "All time" });
+  const [dateMin, setDateMin] = useState<string | null>(null);
+  const [dateMax, setDateMax] = useState<string | null>(null);
 
   const [money, setMoney] = useState<MoneyState>(loadMoney);
   const [lastBotResults, setLastBotResults] = useState<
@@ -88,19 +92,39 @@ export default function App() {
     setPhase("loading");
     setResult(null);
     try {
-      const data = await newRound();
+      const data = await newRound(period.from, period.to);
       setRound(data);
+      setDateMin(data.date_min);
+      setDateMax(data.date_max);
       setRoundNumber((n) => n + 1);
       setPhase("guessing");
     } catch (e) {
       setError(String(e));
       setPhase("error");
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     void loadRound();
   }, [loadRound]);
+
+  // Build era options from the data's date range: "All time" + one per year.
+  const periods = useMemo<Period[]>(() => {
+    const all: Period = { id: "all", label: "All time" };
+    if (!dateMin || !dateMax) return [all];
+    const minY = Number(dateMin.slice(0, 4));
+    const maxY = Number(dateMax.slice(0, 4));
+    const years: Period[] = [];
+    for (let y = minY; y <= maxY; y++) {
+      years.push({
+        id: String(y),
+        label: String(y),
+        from: `${y}-01-01`,
+        to: `${y}-12-31`,
+      });
+    }
+    return [all, ...years];
+  }, [dateMin, dateMax]);
 
   // Keep the stake affordable: never let the selected stake exceed balance.
   const affordableStake = Math.min(stake, Math.max(0, Math.floor(money.balance)));
@@ -202,6 +226,11 @@ export default function App() {
       />
       <main className="app-body">
         <section className="chart-col">
+          <PeriodBar
+            periods={periods}
+            selectedId={period.id}
+            onSelect={setPeriod}
+          />
           {round && (
             <Chart
               ref={chartRef}

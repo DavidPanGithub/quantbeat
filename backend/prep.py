@@ -92,12 +92,24 @@ def synthesize(n_bars: int = 2600, seed: int = 42) -> List[dict]:
     """Generate a TSLA-flavoured series via geometric Brownian motion.
 
     Not real data — a believable stand-in so the game runs fully offline. Uses a
-    per-bar drift and volatility in TSLA's rough historical daily ballpark.
+    per-bar drift and volatility in TSLA's rough historical daily ballpark, and
+    real business-day dates so the era picker works out of the box.
     """
+    from datetime import date, timedelta
+
     rng = random.Random(seed)
     drift = 0.0007  # ~18%/yr on daily bars
     vol = 0.035  # TSLA is famously volatile
     price = 20.0
+
+    # Sequential business days (skip weekends) starting from a fixed date.
+    dates: List[str] = []
+    d = date(2015, 1, 2)
+    while len(dates) < n_bars:
+        if d.weekday() < 5:
+            dates.append(d.isoformat())
+        d += timedelta(days=1)
+
     bars: List[dict] = []
     for i in range(n_bars):
         shock = rng.gauss(0.0, 1.0)
@@ -109,7 +121,7 @@ def synthesize(n_bars: int = 2600, seed: int = 42) -> List[dict]:
         volume = rng.uniform(2e7, 1.5e8)
         bars.append(
             {
-                "stamp": f"{i:06d}",  # synthetic ordinal; discarded downstream
+                "stamp": dates[i],
                 "open": round(open_, 2),
                 "high": round(high, 2),
                 "low": round(low, 2),
@@ -159,6 +171,8 @@ def build_rounds(bars: List[dict]) -> List[db.Round]:
                 future=future,
                 start_close=start_close,
                 bot_calls=bot_calls,
+                start_date=visible_bars[-1]["stamp"],
+                end_date=future_bars[-1]["stamp"],
             )
         )
         round_id += 1
@@ -212,6 +226,8 @@ def main() -> None:
             db.insert_round(conn, r)
         db.set_meta(conn, "source", source)
         db.set_meta(conn, "interval", args.interval)
+        db.set_meta(conn, "date_min", bars[0]["stamp"])
+        db.set_meta(conn, "date_max", bars[-1]["stamp"])
         conn.commit()
 
     print(f"  wrote   : {db.DB_PATH}")

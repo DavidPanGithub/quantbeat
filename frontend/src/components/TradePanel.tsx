@@ -206,6 +206,10 @@ export default function TradePanel(props: TradePanelProps) {
         </div>
       </div>
 
+      <div className="window-dates">
+        📅 this window was <b>{r.start_date}</b> → <b>{r.end_date}</b>
+      </div>
+
       {isOption && (
         <div className="option-breakdown">
           <span>
