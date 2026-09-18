@@ -35,6 +35,7 @@ from app.config import (
     MAX_HORIZON,
     MAX_ROUNDS,
     STOOQ_URL,
+    TICKER,
     VISIBLE_BARS,
     WINDOW_STRIDE,
 )
@@ -73,6 +74,56 @@ def _parse_ohlcv(rows: List[dict]) -> List[dict]:
 def load_from_csv(path: str) -> List[dict]:
     with open(path, newline="") as fh:
         return _parse_ohlcv(list(csv.DictReader(fh)))
+
+
+def fetch_from_yahoo() -> Optional[List[dict]]:
+    """Fetch real daily TSLA bars from Yahoo's v8 chart API (no key required).
+
+    The ``quote`` OHLC arrays are split-adjusted, which is what we want: prices
+    stay continuous across TSLA's 2020 (5:1) and 2022 (3:1) splits.
+    """
+    import json
+    import time
+    from datetime import datetime, timezone
+
+    start = 1262304000  # 2010-01-01, before TSLA's 2010 IPO
+    end = int(time.time())
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{TICKER}"
+        f"?period1={start}&period2={end}&interval=1d"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh)"})
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:  # noqa: BLE001 - network is best-effort here
+        print(f"  ! Yahoo fetch failed ({exc}); trying next source.")
+        return None
+
+    result = (data.get("chart") or {}).get("result")
+    if not result:
+        return None
+    r = result[0]
+    stamps = r.get("timestamp") or []
+    quote = (r.get("indicators") or {}).get("quote", [{}])[0]
+
+    bars: List[dict] = []
+    for i, t in enumerate(stamps):
+        o, h, l, c = quote["open"][i], quote["high"][i], quote["low"][i], quote["close"][i]
+        v = quote["volume"][i]
+        if None in (o, h, l, c):
+            continue  # Yahoo leaves gaps as nulls
+        bars.append(
+            {
+                "stamp": datetime.fromtimestamp(t, tz=timezone.utc).date().isoformat(),
+                "open": round(o, 2),
+                "high": round(h, 2),
+                "low": round(l, 2),
+                "close": round(c, 2),
+                "volume": round(v or 0),
+            }
+        )
+    return bars if len(bars) >= _MIN_BARS else None
 
 
 def fetch_from_stooq() -> Optional[List[dict]]:
@@ -185,6 +236,9 @@ def load_bars(args: argparse.Namespace) -> tuple[List[dict], str]:
     if args.csv:
         return load_from_csv(args.csv), f"CSV ({args.csv})"
     if not args.synthetic:
+        bars = fetch_from_yahoo()
+        if bars:
+            return bars, "Yahoo (real TSLA daily, split-adjusted)"
         bars = fetch_from_stooq()
         if bars:
             return bars, "Stooq (real TSLA daily)"
