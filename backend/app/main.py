@@ -3,21 +3,35 @@
 Two endpoints drive the whole game:
 
 * ``POST /api/round``            -> a fresh round (visible candles only)
-* ``POST /api/round/{id}/guess`` -> scores the guess and reveals the future
+* ``POST /api/round/{id}/guess`` -> prices the trade, reveals the future, scores
 
 A round stores the future for the longest supported horizon. The guess endpoint
-slices that future to the horizon the player picked, computes the outcome, and
-reveals only those bars — so the future can't be sniffed from network traffic,
-and one round works for every horizon.
+slices that future to the chosen horizon, prices the chosen instrument off the
+volatility of the visible window, and returns the player's P&L plus what each
+bot would have made trading shares in its own direction at the same stake — so
+the "you vs quants" board is a money contest, not just an accuracy one.
+
+The future candles are returned only by the guess endpoint, so they can't be
+sniffed from network traffic, and one round serves every horizon and instrument.
 """
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db
+from . import db, trading
 from .bots import BOT_LABELS
-from .config import DEFAULT_INTERVAL, DIRECTION_DOWN, DIRECTION_UP, HORIZON_CHOICES, TICKER
+from .config import (
+    DEFAULT_INTERVAL,
+    DIRECTION_DOWN,
+    DIRECTION_UP,
+    HORIZON_CHOICES,
+    INSTRUMENT_LONG,
+    INSTRUMENT_SHORT,
+    STAKE_CHOICES,
+    STARTING_BALANCE,
+    TICKER,
+)
 from .models import (
     BotInfo,
     BotResult,
@@ -26,7 +40,7 @@ from .models import (
     NewRoundResponse,
 )
 
-app = FastAPI(title="QuantBeat API", version="1.1.0")
+app = FastAPI(title="QuantBeat API", version="1.2.0")
 
 # The Vite dev server runs on a different origin; allow it in development.
 app.add_middleware(
@@ -73,6 +87,8 @@ def new_round() -> NewRoundResponse:
         ticker=TICKER,
         interval=interval,
         horizon_choices=HORIZON_CHOICES,
+        stake_choices=STAKE_CHOICES,
+        starting_balance=STARTING_BALANCE,
         start_close=r.start_close,
         visible=r.visible,
         bots=_bot_roster(),
@@ -94,31 +110,55 @@ def submit_guess(round_id: int, guess: GuessRequest) -> GuessResponse:
     if r is None:
         raise HTTPException(status_code=404, detail="Round not found.")
 
-    # Slice the stored future down to the chosen horizon and score that.
+    # Slice the stored future down to the chosen horizon.
     revealed = r.future[: guess.horizon]
     future_close = revealed[-1]["close"]
     actual = DIRECTION_UP if future_close >= r.start_close else DIRECTION_DOWN
     pct_change = (future_close - r.start_close) / r.start_close * 100.0
 
-    bot_results = [
-        BotResult(
-            id=bot_id,
-            label=BOT_LABELS[bot_id],
-            direction=direction,
-            correct=direction == actual,
+    # Price the option off the volatility of the window the player actually saw.
+    sigma = trading.historical_vol([c["close"] for c in r.visible])
+    premium = trading.option_premium(r.start_close, sigma, guess.horizon)
+
+    outcome = trading.evaluate_trade(
+        guess.instrument, guess.stake, r.start_close, future_close, premium
+    )
+    your_direction = trading.direction_of(guess.instrument)
+
+    # Each bot trades SHARES in its own direction at the same stake, so balances
+    # are comparable across the board.
+    bot_results = []
+    for bot_id, direction in r.bot_calls.items():
+        instrument = INSTRUMENT_LONG if direction == DIRECTION_UP else INSTRUMENT_SHORT
+        bot_pnl = trading.evaluate_trade(
+            instrument, guess.stake, r.start_close, future_close, premium
+        ).pnl
+        bot_results.append(
+            BotResult(
+                id=bot_id,
+                label=BOT_LABELS[bot_id],
+                direction=direction,
+                correct=direction == actual,
+                pnl=bot_pnl,
+            )
         )
-        for bot_id, direction in r.bot_calls.items()
-    ]
 
     return GuessResponse(
         round_id=r.id,
         horizon=guess.horizon,
-        your_direction=guess.direction,
+        instrument=guess.instrument,
+        stake=guess.stake,
+        your_direction=your_direction,
         actual_direction=actual,
-        correct=guess.direction == actual,
+        correct=your_direction == actual,
         start_close=r.start_close,
         future_close=future_close,
         pct_change=pct_change,
+        pnl=outcome.pnl,
+        strike=outcome.strike,
+        premium=outcome.premium,
+        contracts=outcome.contracts,
+        payoff=outcome.payoff,
         future=revealed,
         bot_results=bot_results,
     )

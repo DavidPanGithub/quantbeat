@@ -32,6 +32,26 @@ WINDOW_STRIDE = 3
 # Human-facing unit for one bar, used when the data doesn't specify one.
 DEFAULT_INTERVAL = "day"
 
+# --- Trading account -------------------------------------------------------
+# Everyone (player + bots) starts with this cash balance.
+STARTING_BALANCE = 10_000.0
+# Stake presets the player can risk on a single trade.
+STAKE_CHOICES = [100, 500, 1_000, 5_000]
+
+# --- Instruments -----------------------------------------------------------
+INSTRUMENT_LONG = "long"     # buy shares  — profit if price rises (linear)
+INSTRUMENT_SHORT = "short"   # short shares — profit if price falls (linear)
+INSTRUMENT_CALL = "call"     # ATM call option — leveraged bullish, risk = premium
+INSTRUMENT_PUT = "put"       # ATM put option  — leveraged bearish, risk = premium
+INSTRUMENTS = [INSTRUMENT_LONG, INSTRUMENT_SHORT, INSTRUMENT_CALL, INSTRUMENT_PUT]
+
+# --- Option pricing (simplified ATM approximation) -------------------------
+# At-the-money Black-Scholes reduces to roughly 0.4 * S * sigma * sqrt(T).
+# Good enough for a game; real pricing is not the point here.
+ATM_PREMIUM_FACTOR = 0.4
+# Floor the premium at this fraction of spot so it's never ~0 on calm windows.
+MIN_PREMIUM_FRACTION = 0.005
+
 # --- Prediction outcomes ---------------------------------------------------
 DIRECTION_UP = "up"
 DIRECTION_DOWN = "down"

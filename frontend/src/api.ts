@@ -1,4 +1,4 @@
-import type { Direction, GuessResponse, NewRoundResponse } from "./types";
+import type { GuessResponse, Instrument, NewRoundResponse } from "./types";
 
 async function post<T>(url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -19,8 +19,13 @@ export function newRound(): Promise<NewRoundResponse> {
 
 export function submitGuess(
   roundId: number,
-  direction: Direction,
+  instrument: Instrument,
+  stake: number,
   horizon: number
 ): Promise<GuessResponse> {
-  return post<GuessResponse>(`/api/round/${roundId}/guess`, { direction, horizon });
+  return post<GuessResponse>(`/api/round/${roundId}/guess`, {
+    instrument,
+    stake,
+    horizon,
+  });
 }

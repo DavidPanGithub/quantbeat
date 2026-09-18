@@ -92,6 +92,28 @@ window, so their calls don't depend on the horizon — one round serves them all
 Your accuracy and current streak are tracked per session, alongside each bot's
 running accuracy — so you can see, in real time, whether you're beating the quants.
 
+## Trade with real money (and real leverage)
+
+You start with a **$10,000 account** and stake cash on each round. Pick your
+instrument:
+
+| Instrument | Payoff                                                          |
+|------------|-----------------------------------------------------------------|
+| **Long**   | Buy shares — linear P&L, `stake × return`                       |
+| **Short**  | Short shares — linear, profits when price falls                 |
+| **Call**   | ATM call option — capped loss (the premium), leveraged upside   |
+| **Put**    | ATM put option — capped loss, leveraged downside bet            |
+
+Options are priced off the **volatility of the visible window** using the ATM
+Black-Scholes approximation `premium ≈ 0.4 · S · σ · √T` (see
+`backend/app/trading.py`). Your stake buys `stake / premium` contracts, so a
+correct option call can multiply your money — and a wrong one loses the whole
+premium. That asymmetry is the point.
+
+Every bot trades **shares in its signal's direction at your stake**, so the
+scoreboard is a live **P&L leaderboard**: out-earn all four to win. Blow up your
+account and you can reset. Balances persist in `localStorage`.
+
 ## Days, minutes, whatever you load
 
 The engine forecasts **N bars ahead** — a bar is whatever data you loaded. Feed
