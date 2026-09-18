@@ -169,6 +169,47 @@ body {
   margin-bottom: 14px;
   font-size: 14px;
 }
+
+/* ---------- Horizon picker ---------- */
+.horizon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.horizon-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.horizon-choices {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.horizon-chip {
+  border: 1px solid var(--border);
+  background: var(--bg-panel-2);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.horizon-chip:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.horizon-chip.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(240, 185, 11, 0.12);
+  font-weight: 700;
+}
 .trade-prompt b {
   color: var(--text);
 }

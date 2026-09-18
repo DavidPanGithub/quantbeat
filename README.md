@@ -73,9 +73,10 @@ The frontend proxies `/api` to the backend on port 8000.
 
 ## How scoring works
 
-Each round shows `VISIBLE_DAYS` of candles. You predict whether the close
-`HORIZON` trading days later is **higher (LONG)** or **lower (SHORT)** than the
-last visible close. The bots predict the same thing from the same data:
+Each round shows `VISIBLE_BARS` of candles. You pick a **forecast horizon**
+(1 / 5 / 10 / 20 / 60 bars) and predict whether the close that many bars later
+is **higher (LONG)** or **lower (SHORT)** than the last visible close. The bots
+predict the same thing from the same data:
 
 | Bot            | Strategy                                            |
 |----------------|-----------------------------------------------------|
@@ -84,9 +85,27 @@ last visible close. The bots predict the same thing from the same data:
 | MA Crossover   | Fast SMA above slow SMA → bet up                    |
 | Coin Flip      | 50/50 baseline (the bar everyone should clear)      |
 
+Each round stores the future for the *longest* horizon; the API slices it to the
+horizon you chose and scores against that. The bots read only the visible
+window, so their calls don't depend on the horizon — one round serves them all.
+
 Your accuracy and current streak are tracked per session, alongside each bot's
-running accuracy — so you can see, in real time, whether you're actually beating
-the quants.
+running accuracy — so you can see, in real time, whether you're beating the quants.
+
+## Days, minutes, whatever you load
+
+The engine forecasts **N bars ahead** — a bar is whatever data you loaded. Feed
+it daily bars and horizons mean days; feed it 1-minute bars and the identical
+game becomes minute-level, UI labels included. `--interval` sets only the
+human-facing unit:
+
+```bash
+python prep.py --csv tsla_1min.csv --interval minute   # minute-level game
+python prep.py --csv tsla_daily.csv --interval day      # daily (default)
+```
+
+> The bundled Stooq/synthetic data is **daily**, so minute-level play needs an
+> intraday (1-min) OHLCV CSV — that data isn't included.
 
 ## Roadmap (v2 ideas)
 

@@ -1,10 +1,13 @@
 """SQLite persistence for precomputed game rounds.
 
-A "round" is fully computed once by ``prep.py`` and stored here: the candles the
-player sees (``visible``), the hidden candles revealed after a guess
-(``future``), the ground-truth direction, and each bot's call. The API only ever
-sends ``visible`` to the client until a guess is submitted, so the future can't
-be sniffed from network traffic.
+A "round" is computed once by ``prep.py``: the candles the player sees
+(``visible``), the hidden candles for the *longest* horizon (``future``), the
+reference close at the prediction point, and each bot's directional call. The
+API slices ``future`` to whatever horizon the player picks and scores against
+that — the bots' calls don't depend on horizon, so one round serves them all.
+
+The API only ever sends ``visible`` to the client until a guess is submitted,
+so the future can't be sniffed from network traffic.
 """
 from __future__ import annotations
 
@@ -17,13 +20,11 @@ from .config import DB_PATH
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS rounds (
-    id               INTEGER PRIMARY KEY,
-    visible_json     TEXT NOT NULL,
-    future_json      TEXT NOT NULL,
-    start_close      REAL NOT NULL,
-    future_close     REAL NOT NULL,
-    actual_direction TEXT NOT NULL,
-    bot_calls_json   TEXT NOT NULL
+    id             INTEGER PRIMARY KEY,
+    visible_json   TEXT NOT NULL,
+    future_json    TEXT NOT NULL,
+    start_close    REAL NOT NULL,
+    bot_calls_json TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS meta (
@@ -37,10 +38,8 @@ CREATE TABLE IF NOT EXISTS meta (
 class Round:
     id: int
     visible: List[dict]
-    future: List[dict]
+    future: List[dict]  # MAX_HORIZON bars
     start_close: float
-    future_close: float
-    actual_direction: str
     bot_calls: Dict[str, str]
 
 
@@ -77,15 +76,12 @@ def get_meta(conn: sqlite3.Connection, key: str) -> Optional[str]:
 def insert_round(conn: sqlite3.Connection, r: Round) -> None:
     conn.execute(
         "INSERT INTO rounds (id, visible_json, future_json, start_close, "
-        "future_close, actual_direction, bot_calls_json) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "bot_calls_json) VALUES (?, ?, ?, ?, ?)",
         (
             r.id,
             json.dumps(r.visible),
             json.dumps(r.future),
             r.start_close,
-            r.future_close,
-            r.actual_direction,
             json.dumps(r.bot_calls),
         ),
     )
@@ -109,7 +105,5 @@ def get_round(conn: sqlite3.Connection, round_id: int) -> Optional[Round]:
         visible=json.loads(row["visible_json"]),
         future=json.loads(row["future_json"]),
         start_close=row["start_close"],
-        future_close=row["future_close"],
-        actual_direction=row["actual_direction"],
         bot_calls=json.loads(row["bot_calls_json"]),
     )

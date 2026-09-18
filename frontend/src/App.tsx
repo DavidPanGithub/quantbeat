@@ -17,6 +17,13 @@ function bump(t: Tally, correct: boolean): Tally {
   return { correct: t.correct + (correct ? 1 : 0), total: t.total + 1 };
 }
 
+// Default forecast horizon (in bars), used until the player changes it.
+const DEFAULT_HORIZON = 10;
+
+function unit(interval: string, n: number): string {
+  return n === 1 ? interval : `${interval}s`;
+}
+
 export default function App() {
   const chartRef = useRef<ChartHandle>(null);
 
@@ -25,6 +32,7 @@ export default function App() {
   const [round, setRound] = useState<NewRoundResponse | null>(null);
   const [roundNumber, setRoundNumber] = useState(0);
   const [result, setResult] = useState<GuessResponse | null>(null);
+  const [selectedHorizon, setSelectedHorizon] = useState(DEFAULT_HORIZON);
 
   const [you, setYou] = useState<Tally>({ correct: 0, total: 0 });
   const [streak, setStreak] = useState(0);
@@ -58,7 +66,7 @@ export default function App() {
     async (direction: Direction) => {
       if (!round) return;
       try {
-        const res = await submitGuess(round.round_id, direction);
+        const res = await submitGuess(round.round_id, direction, selectedHorizon);
         setResult(res);
         setPhase("revealing");
         chartRef.current?.reveal(res.future, () => {
@@ -89,7 +97,7 @@ export default function App() {
         setPhase("error");
       }
     },
-    [round]
+    [round, selectedHorizon]
   );
 
   if (phase === "error") {
@@ -129,12 +137,15 @@ export default function App() {
               ref={chartRef}
               visible={round.visible}
               startClose={round.start_close}
-              horizonDays={round.horizon_days}
+              horizonLabel={`${selectedHorizon} ${unit(round.interval, selectedHorizon)}`}
             />
           )}
           <TradePanel
             phase={phase === "loading" ? "guessing" : (phase as any)}
-            horizonDays={round?.horizon_days ?? 0}
+            interval={round?.interval ?? "day"}
+            horizonChoices={round?.horizon_choices ?? []}
+            selectedHorizon={selectedHorizon}
+            onSelectHorizon={setSelectedHorizon}
             result={result}
             onGuess={onGuess}
             onNext={() => void loadRound()}

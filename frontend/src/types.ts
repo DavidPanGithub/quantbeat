@@ -19,7 +19,8 @@ export interface BotInfo {
 export interface NewRoundResponse {
   round_id: number;
   ticker: string;
-  horizon_days: number;
+  interval: string; // human unit for one bar: "day", "minute", ...
+  horizon_choices: number[];
   start_close: number;
   visible: Candle[];
   bots: BotInfo[];
@@ -34,6 +35,7 @@ export interface BotResult {
 
 export interface GuessResponse {
   round_id: number;
+  horizon: number;
   your_direction: Direction;
   actual_direction: Direction;
   correct: boolean;

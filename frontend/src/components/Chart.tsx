@@ -15,9 +15,11 @@ import {
 } from "react";
 import type { Candle } from "../types";
 
-// Reveal one hidden candle every REVEAL_INTERVAL_MS for the "market ticking
-// forward" animation.
-const REVEAL_INTERVAL_MS = 180;
+// The reveal animation should take roughly this long regardless of how many
+// bars are shown; per-bar delay is derived from it and clamped.
+const REVEAL_TOTAL_MS = 2400;
+const REVEAL_MIN_MS = 45;
+const REVEAL_MAX_MS = 180;
 // Anchor the sequential day index onto a fake timeline. The value is arbitrary;
 // what matters is that candles are unique and ascending. Real dates are never
 // shown — the axis is relabelled to "D{n}".
@@ -53,11 +55,11 @@ export interface ChartHandle {
 interface ChartProps {
   visible: Candle[];
   startClose: number;
-  horizonDays: number;
+  horizonLabel: string;
 }
 
 const Chart = forwardRef<ChartHandle, ChartProps>(function Chart(
-  { visible, startClose, horizonDays },
+  { visible, startClose, horizonLabel },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -173,6 +175,10 @@ const Chart = forwardRef<ChartHandle, ChartProps>(function Chart(
       if (!candleSeries || !volumeSeries || !chart) return;
 
       candleSeries.setMarkers([]);
+      const intervalMs = Math.max(
+        REVEAL_MIN_MS,
+        Math.min(REVEAL_MAX_MS, Math.round(REVEAL_TOTAL_MS / future.length))
+      );
       let i = 0;
       timerRef.current = window.setInterval(() => {
         if (i >= future.length) {
@@ -192,6 +198,7 @@ const Chart = forwardRef<ChartHandle, ChartProps>(function Chart(
               ).toFixed(1)}%`,
             },
           ]);
+          chart.timeScale().fitContent();
           onDone();
           return;
         }
@@ -200,14 +207,14 @@ const Chart = forwardRef<ChartHandle, ChartProps>(function Chart(
         volumeSeries.update(volumePoint(c));
         chart.timeScale().scrollToPosition(2, false);
         i += 1;
-      }, REVEAL_INTERVAL_MS);
+      }, intervalMs);
     },
   }));
 
   return (
     <div className="chart-wrap">
       <div className="chart-horizon-badge">
-        forecast horizon: <b>{horizonDays} trading days</b>
+        forecast horizon: <b>{horizonLabel}</b>
       </div>
       <div ref={containerRef} className="chart-canvas" />
     </div>

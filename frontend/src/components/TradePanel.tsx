@@ -4,15 +4,25 @@ type Phase = "guessing" | "revealing" | "revealed";
 
 interface TradePanelProps {
   phase: Phase;
-  horizonDays: number;
+  interval: string;
+  horizonChoices: number[];
+  selectedHorizon: number;
+  onSelectHorizon: (h: number) => void;
   result: GuessResponse | null;
   onGuess: (d: Direction) => void;
   onNext: () => void;
 }
 
+function unit(interval: string, n: number): string {
+  return n === 1 ? interval : `${interval}s`;
+}
+
 export default function TradePanel({
   phase,
-  horizonDays,
+  interval,
+  horizonChoices,
+  selectedHorizon,
+  onSelectHorizon,
   result,
   onGuess,
   onNext,
@@ -20,8 +30,26 @@ export default function TradePanel({
   if (phase === "guessing") {
     return (
       <div className="trade-panel">
+        <div className="horizon-picker">
+          <span className="horizon-label">FORECAST HORIZON</span>
+          <div className="horizon-choices">
+            {horizonChoices.map((h) => (
+              <button
+                key={h}
+                className={`horizon-chip ${h === selectedHorizon ? "active" : ""}`}
+                onClick={() => onSelectHorizon(h)}
+              >
+                {h} {unit(interval, h)}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="trade-prompt">
-          Where does TSLA close in <b>{horizonDays} days</b>?
+          Where does TSLA close in{" "}
+          <b>
+            {selectedHorizon} {unit(interval, selectedHorizon)}
+          </b>
+          ?
         </div>
         <div className="trade-buttons">
           <button className="trade-btn long" onClick={() => onGuess("up")}>
@@ -56,10 +84,14 @@ export default function TradePanel({
       <div className="result-detail">
         <div>
           <span className="result-label">Your call</span>
-          <span className="result-value">{r.your_direction === "up" ? "LONG" : "SHORT"}</span>
+          <span className="result-value">
+            {r.your_direction === "up" ? "LONG" : "SHORT"}
+          </span>
         </div>
         <div>
-          <span className="result-label">Actual move</span>
+          <span className="result-label">
+            Move / {r.horizon} {unit(interval, r.horizon)}
+          </span>
           <span className={`result-value ${up ? "pos" : "neg"}`}>
             {up ? "▲" : "▼"} {r.pct_change >= 0 ? "+" : ""}
             {r.pct_change.toFixed(2)}%

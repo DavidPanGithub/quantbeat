@@ -9,7 +9,7 @@ from .config import DIRECTION_DOWN, DIRECTION_UP
 
 
 class Candle(BaseModel):
-    # ``t`` is a sequential day index, NOT a real date. Real calendar dates are
+    # ``t`` is a sequential bar index, NOT a real date/time. Real timestamps are
     # deliberately withheld so players can't look up the outcome.
     t: int
     open: float
@@ -27,7 +27,8 @@ class BotInfo(BaseModel):
 class NewRoundResponse(BaseModel):
     round_id: int
     ticker: str
-    horizon_days: int
+    interval: str  # human unit for one bar: "day", "minute", ...
+    horizon_choices: List[int]
     start_close: float
     visible: List[Candle]
     bots: List[BotInfo]
@@ -35,6 +36,7 @@ class NewRoundResponse(BaseModel):
 
 class GuessRequest(BaseModel):
     direction: str = Field(..., pattern=f"^({DIRECTION_UP}|{DIRECTION_DOWN})$")
+    horizon: int = Field(..., gt=0)
 
 
 class BotResult(BaseModel):
@@ -46,6 +48,7 @@ class BotResult(BaseModel):
 
 class GuessResponse(BaseModel):
     round_id: int
+    horizon: int
     your_direction: str
     actual_direction: str
     correct: bool

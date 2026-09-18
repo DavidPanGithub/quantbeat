@@ -19,7 +19,8 @@ export function newRound(): Promise<NewRoundResponse> {
 
 export function submitGuess(
   roundId: number,
-  direction: Direction
+  direction: Direction,
+  horizon: number
 ): Promise<GuessResponse> {
-  return post<GuessResponse>(`/api/round/${roundId}/guess`, { direction });
+  return post<GuessResponse>(`/api/round/${roundId}/guess`, { direction, horizon });
 }
