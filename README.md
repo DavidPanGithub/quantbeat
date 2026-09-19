@@ -2,6 +2,12 @@
 
 **Can you beat the quants at predicting Tesla?**
 
+🎮 **[Play the live demo →](https://quantbeat.davidusinggithub.workers.dev)**
+
+> Hosted free on Cloudflare Workers (frontend) + Render (backend). The API sleeps
+> after idle, so the first round may take ~50s to cold-start, then it's instant.
+
+
 QuantBeat is a stock-prediction game built on *real historical TSLA data*. You're
 shown a live-trading-style chart up to a hidden point in history, you call the
 next move — **LONG or SHORT** — and the market reveals what actually happened.
